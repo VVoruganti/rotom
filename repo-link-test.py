@@ -18,41 +18,38 @@ if(len(argv) > 1):
     run(args=["git", "clone", repo, "test-repo/"])
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
-#files = listdir("test-repo")
-#print(files)
-#print(len(files))
 matches = []
 
-# for filename in files:
-#     file_path = join(curdir, "test-repo", filename)
-#     if(isfile(file_path)): # Check to make sure it is not a directory
-#         file = open(file_path, "r")
-#         text = " ".join(file.readlines())
-#         match = re.search(url_match,text)
-#         if(match != None):
-#             print(match)
-#     else:
-#         recursive_search(filename)
-#         print("test")
-        # need a recursive step here
-
+# Main recrsive method that runs the searching on the repository
+# will recursively check each file for matches to the regex and add them to 
+# a global array of matches
 def recursive_search(directory):
+    print(directory)
     global url_match
     global matches
     files = listdir(directory)
-    print(files)
+    # print(files)
     for filename in files:
+        print("    Checking following file {}".format(filename))
         file_path = join(directory, filename)
         if(isfile(file_path)):
             with open(file_path, "r") as file:
-                text = " ".join(file.readlines())
-                match = re.search(url_match,text)
-                if(match != None):
-                    print(match)
-                    matches.append(match)
+                try:
+                    text = " ".join(file.readlines())
+                    match = re.search(url_match,text)
+                    if(match != None):
+                        # print(match)
+                        matches.append(match)
+                except UnicodeDecodeError as e:
+                    # TODO determine a method for reading files in different languages
+                    # as these still have links and hsould not be needlessly ignored
+                    print("     Following file has encoding issue {}".format(filename))
         else:
             recursive_search(file_path)
 
 recursive_search(join(curdir,"test-repo"))
-# have a final output that looks similar to how rip grep organizes its output sampel command below
+print(matches)
+print(len(matches))
+
+# TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
