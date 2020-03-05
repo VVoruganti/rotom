@@ -33,7 +33,7 @@ def recursive_search(directory):
         print("    Checking following file {}".format(filename))
         file_path = join(directory, filename)
         if(isfile(file_path)):
-            with open(file_path, "r") as file:
+            with open(file_path, "r", encoding="latin-1") as file:
                 try:
                     text = " ".join(file.readlines())
                     match = re.search(url_match,text)
@@ -41,8 +41,6 @@ def recursive_search(directory):
                         # print(match)
                         matches.append(match)
                 except UnicodeDecodeError as e:
-                    # TODO determine a method for reading files in different languages
-                    # as these still have links and hsould not be needlessly ignored
                     print("     Following file has encoding issue {}".format(filename))
         else:
             recursive_search(file_path)
