@@ -18,19 +18,20 @@ if(len(argv) > 1):
     run(args=["git", "clone", repo, "test-repo/"])
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
+# TODO change to a dictionary that will map a filepath to the links in it. Will help with final output
 matches = []
 
 # Main recrsive method that runs the searching on the repository
 # will recursively check each file for matches to the regex and add them to 
 # a global array of matches
 def recursive_search(directory):
-    print(directory)
+    # print(directory)
     global url_match
     global matches
     files = listdir(directory)
     # print(files)
     for filename in files:
-        print("    Checking following file {}".format(filename))
+        # print("    Checking following file {}".format(filename))
         file_path = join(directory, filename)
         if(isfile(file_path)):
             with open(file_path, "r", encoding="latin-1") as file:
@@ -39,15 +40,18 @@ def recursive_search(directory):
                     match = re.search(url_match,text)
                     if(match != None):
                         # print(match)
-                        matches.append(match)
+                        matches.append((file_path, match))
                 except UnicodeDecodeError as e:
                     print("     Following file has encoding issue {}".format(filename))
         else:
             recursive_search(file_path)
 
 recursive_search(join(curdir,"test-repo"))
-print(matches)
-print(len(matches))
+#print(matches)
+#print(len(matches))
+
+for match in matches:
+    print("{} --- in file -- {}".format(match[1].group(), match[0]))
 
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
