@@ -7,8 +7,13 @@ from sys import argv
 from subprocess import run
 # Make the regex for the URI
 # Sourced this regex from https://ihateregex.io
-# TODO fix regex so no false positives of ')'at end or '.' at the end of the link 
-url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)')
+#url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)')
+url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)[-a-zA-Z\/]')
+
+# TODO Figure out how to resolve below error
+# Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ff09409ee10>: Failed to establish
+# a new connection: [Errno 101] Network is unreachable')
+
 
 curdir = dirname(abspath(__file__))
 # Get url of the repo to pull from 
@@ -54,6 +59,7 @@ recursive_search(join(curdir,"test-repo"))
 
 print("\n Now checking validity of each link \n")
 
+# https://realpython.com/python-requests/ - guideline for how to go about testing
 for match in matches:
     try:
         r = requests.get(match[1].group(), timeout=1)
