@@ -26,7 +26,7 @@ if(len(argv) > 1):
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
 # TODO change to a dictionary that will map a filepath to the links in it. Will help with final output
-matches = []
+matches = {}
 
 # Main recrsive method that runs the searching on the repository
 # will recursively check each file for matches to the regex and add them to 
@@ -47,7 +47,7 @@ def recursive_search(directory):
                     match = re.search(url_match,text)
                     if(match != None):
                         # print(match)
-                        matches.append((file_path, match, False))
+                        matches[file_path] =  (match, False)
                 except UnicodeDecodeError as e:
                     print("     Following file has encoding issue {}".format(filename))
         else:
@@ -60,13 +60,13 @@ recursive_search(join(curdir,"test-repo"))
 print("\n Now checking validity of each link \n")
 
 # https://realpython.com/python-requests/ - guideline for how to go about testing
-for match in matches:
-    try:
-        r = requests.get(match[1].group(), timeout=1)
-    except Timeout:
-        print("{} Timed out".format(match[1].group()))
-    if (r.status_code != 200): 
-        print("{} {}".format(match[1].group(), r.status_code))
+# for match in matches:
+#     try:
+#         r = requests.get(match[1].group(), timeout=1)
+#     except Timeout:
+#         print("{} Timed out".format(match[1].group()))
+#     if (r.status_code != 200): 
+#         print("{} {}".format(match[1].group(), r.status_code))
 
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
