@@ -1,6 +1,7 @@
 import re
 import requests
 from requests.exceptions import Timeout
+from requests.packages.urllib3.exceptions import NewConnectionError
 from os.path import join, isfile, isdir, dirname, abspath
 from os import listdir
 from sys import argv
@@ -46,8 +47,10 @@ def recursive_search(directory):
                     text = " ".join(file.readlines())
                     match = re.search(url_match,text)
                     if(match != None):
-                        # print(match)
-                        matches[file_path] =  (match, False)
+                        if(not file_path in matches):
+                            matches[file_path] = []
+                        matches[file_path].append((match, False))
+                    # TODO use a Set data type in addition to this because a lot of links are repeated
                 except UnicodeDecodeError as e:
                     print("     Following file has encoding issue {}".format(filename))
         else:
@@ -59,14 +62,19 @@ recursive_search(join(curdir,"test-repo"))
 
 print("\n Now checking validity of each link \n")
 
-# https://realpython.com/python-requests/ - guideline for how to go about testing
-# for match in matches:
-#     try:
-#         r = requests.get(match[1].group(), timeout=1)
-#     except Timeout:
-#         print("{} Timed out".format(match[1].group()))
-#     if (r.status_code != 200): 
-#         print("{} {}".format(match[1].group(), r.status_code))
+#https://realpython.com/python-requests/ - guideline for how to go about testing
+# TODO loop through a set instead
+for file in matches:
+    for url in matches[file]:
+        try:
+            r = requests.get(url[0].group(), timeout=1)
+        except Timeout:
+            print("{} Timed out".format(url[0].group()))
+        except NewConnectionError:
+            print("{} Could not Connect".format(url[0].group()))
+        if (r.status_code != 200): 
+            print("{} {}".format(url[0].group(), r.status_code))
+    
 
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
