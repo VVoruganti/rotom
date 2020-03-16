@@ -1,20 +1,16 @@
 import re
 import requests
-from requests.exceptions import Timeout
-from requests.packages.urllib3.exceptions import NewConnectionError
+from requests.exceptions import Timeout, ConnectionError
+from urllib3.exceptions import NewConnectionError
 from os.path import join, isfile, isdir, dirname, abspath
 from os import listdir
 from sys import argv
 from subprocess import run
+from enum import Enum
 # Make the regex for the URI
 # Sourced this regex from https://ihateregex.io
 #url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)')
 url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)[-a-zA-Z\/]')
-
-# TODO Figure out how to resolve below error
-# Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ff09409ee10>: Failed to establish
-# a new connection: [Errno 101] Network is unreachable')
-
 
 curdir = dirname(abspath(__file__))
 # Get url of the repo to pull from 
@@ -28,7 +24,7 @@ if(len(argv) > 1):
 
 # TODO change to a dictionary that will map a filepath to the links in it. Will help with final output
 matches = {}
-
+links = {}
 # Main recrsive method that runs the searching on the repository
 # will recursively check each file for matches to the regex and add them to 
 # a global array of matches
@@ -36,6 +32,7 @@ def recursive_search(directory):
     # print(directory)
     global url_match
     global matches
+    global links
     files = listdir(directory)
     print(files)
     for filename in files:
@@ -49,9 +46,10 @@ def recursive_search(directory):
                     if(match != None):
                         if(not file_path in matches):
                             matches[file_path] = []
-                        matches[file_path].append((match, False))
+                        matches[file_path].append([match, False])
+                        links[match.group()] = False
                     # TODO use a Set data type in addition to this because a lot of links are repeated
-                except UnicodeDecodeError as e:
+                except UnicodeDecodeError:
                     print("     Following file has encoding issue {}".format(filename))
         else:
             recursive_search(file_path)
@@ -60,21 +58,41 @@ recursive_search(join(curdir,"test-repo"))
 #print(matches)
 #print(len(matches))
 
-print("\n Now checking validity of each link \n")
-
+print("\n Now checking validity of each link, there are {} links \n".format(len(links)))
 #https://realpython.com/python-requests/ - guideline for how to go about testing
-# TODO loop through a set instead
-for file in matches:
-    for url in matches[file]:
-        try:
-            r = requests.get(url[0].group(), timeout=1)
-        except Timeout:
-            print("{} Timed out".format(url[0].group()))
-        except NewConnectionError:
-            print("{} Could not Connect".format(url[0].group()))
-        if (r.status_code != 200): 
-            print("{} {}".format(url[0].group(), r.status_code))
-    
 
+class ConnectionCodes(Enum):
+    CONNECT = 1,
+    TIMEOUT = 2,
+    ERROR = 3
+
+for link in links:
+    try:
+        r = requests.get(link, timeout=1)
+    except Timeout:
+#        print("{} ---- Time out".format(link))
+        links[link] = ConnectionCodes.TIMEOUT
+    except ConnectionError:
+#        print("{} ---- Connection Error".format(link))
+        links[link] = ConnectionCodes.ERROR
+    except Exception as e:
+#         print("\n")
+#         print(link)
+#         print(type(e))
+#         print(e.args)
+#         print(e)
+#         print("\n")
+        links[link] = ConnectionCodes.ERROR
+    else:
+        links[link] = ConnectionCodes.CONNECT
+ #       print("{} is valid".format(link))
+
+print(links)
+
+for file in matches:
+    for match in file:
+        links[match[0]] = match[1]
+
+print(matches)
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
