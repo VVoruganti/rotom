@@ -7,6 +7,7 @@ from os import listdir
 from sys import argv
 from subprocess import run
 from enum import Enum
+from colorama import Fore, Back, Style
 # Make the regex for the URI
 # Sourced this regex from https://ihateregex.io
 #url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)')
@@ -94,13 +95,15 @@ def print_report():
         for match in matches[file]:
             match[1] = links[match[0].group()]
             #links[match[0]] = match[1]
-            if(match[1] != ConnectionCodes.CONNECT):
-                print("    {match} ------ | STATUS : {status}".format(match=match[0].group(), status=match[1]))
+            if(match[1] == ConnectionCodes.CONNECT):
+                print(Fore.GREEN + "    {match} ------ | STATUS : CONNECT".format(match=match[0].group()))
+            elif(match[1] == ConnectionCodes.TIMEOUT):
+                print(Fore.MAGENTA + "    {match} ------ | STATUS : TIMEOUT".format(match=match[0].group()))
+            else:
+                print(Fore.RED + "    {match} ------ | STATUS : ERROR".format(match=match[0].group()))
 
 recursive_search(join(curdir,"test-repo"))
 
 # broken into different functions to make debugging easier. Can easily turn off and of features
 check_links()
 print_report()
-# TODO have a final output that looks similar to how rip grep organizes its output sampel command below
-# rg -e https:\/\/
