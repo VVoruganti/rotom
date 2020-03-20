@@ -1,5 +1,6 @@
 import re
 import requests
+import json
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import NewConnectionError
 from os.path import join, isfile, isdir, dirname, abspath
@@ -22,7 +23,6 @@ if(len(argv) > 1):
     run(args=["git", "clone", repo, "test-repo/"])
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
-# TODO change to a dictionary that will map a filepath to the links in it. Will help with final output
 matches = {}
 links = {}
 # Main recrsive method that runs the searching on the repository
@@ -48,7 +48,6 @@ def recursive_search(directory):
                             matches[file_path] = []
                         matches[file_path].append([match, False])
                         links[match.group()] = False
-                    # TODO use a Set data type in addition to this because a lot of links are repeated
                 except UnicodeDecodeError:
                     print("     Following file has encoding issue {}".format(filename))
         else:
@@ -70,29 +69,29 @@ for link in links:
     try:
         r = requests.get(link, timeout=1)
     except Timeout:
-#        print("{} ---- Time out".format(link))
+        print("{} ---- Time out".format(link))
         links[link] = ConnectionCodes.TIMEOUT
     except ConnectionError:
-#        print("{} ---- Connection Error".format(link))
+        print("{} ---- Connection Error".format(link))
         links[link] = ConnectionCodes.ERROR
     except Exception as e:
-#         print("\n")
-#         print(link)
-#         print(type(e))
-#         print(e.args)
-#         print(e)
-#         print("\n")
-        links[link] = ConnectionCodes.ERROR
+         print("\n")
+         print(link)
+         print(type(e))
+         print(e.args)
+         print(e)
+         print("\n")
+         links[link] = ConnectionCodes.ERROR
     else:
-        links[link] = ConnectionCodes.CONNECT
- #       print("{} is valid".format(link))
-
-print(links)
+         links[link] = ConnectionCodes.CONNECT
+         print("{} is valid".format(link))
 
 for file in matches:
-    for match in file:
-        links[match[0]] = match[1]
+    print("File: {}".format(file))
+    for match in matches[file]:
+        match[1] = links[match[0].group()]
+        #links[match[0]] = match[1]
+        print("    {match} ------ | STATUS : {status}".format(match=match[0].group(), status=match[1]))
 
-print(matches)
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
