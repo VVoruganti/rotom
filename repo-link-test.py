@@ -1,6 +1,5 @@
 import re
 import requests
-import json
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import NewConnectionError
 from os.path import join, isfile, isdir, dirname, abspath
@@ -40,58 +39,68 @@ def recursive_search(directory):
         file_path = join(directory, filename)
         if(isfile(file_path)):
             with open(file_path, "r", encoding="latin-1") as file:
-                try:
-                    text = " ".join(file.readlines())
-                    match = re.search(url_match,text)
-                    if(match != None):
-                        if(not file_path in matches):
-                            matches[file_path] = []
-                        matches[file_path].append([match, False])
-                        links[match.group()] = False
-                except UnicodeDecodeError:
-                    print("     Following file has encoding issue {}".format(filename))
+                for line in file:
+                    try:
+                        # TODO check if multiple links on the same line
+                        match = re.search(url_match, line)
+                        if(match != None):
+                            if(not file_path in matches):
+                                matches[file_path] = []
+                            matches[file_path].append([match, False])
+                            links[match.group()] = False
+                    except UnicodeDecodeError:
+                        print("    Following file has encoding issue{}".format(filename))
         else:
             recursive_search(file_path)
-
-recursive_search(join(curdir,"test-repo"))
-#print(matches)
-#print(len(matches))
-
-print("\n Now checking validity of each link, there are {} links \n".format(len(links)))
-#https://realpython.com/python-requests/ - guideline for how to go about testing
 
 class ConnectionCodes(Enum):
     CONNECT = 1,
     TIMEOUT = 2,
     ERROR = 3
 
-for link in links:
-    try:
-        r = requests.get(link, timeout=1)
-    except Timeout:
-        print("{} ---- Time out".format(link))
-        links[link] = ConnectionCodes.TIMEOUT
-    except ConnectionError:
-        print("{} ---- Connection Error".format(link))
-        links[link] = ConnectionCodes.ERROR
-    except Exception as e:
-         print("\n")
-         print(link)
-         print(type(e))
-         print(e.args)
-         print(e)
-         print("\n")
-         links[link] = ConnectionCodes.ERROR
-    else:
-         links[link] = ConnectionCodes.CONNECT
-         print("{} is valid".format(link))
+#recursive_search(join(curdir,"temp"))
+#print(matches)
+#print(len(matches))
 
-for file in matches:
-    print("File: {}".format(file))
-    for match in matches[file]:
-        match[1] = links[match[0].group()]
-        #links[match[0]] = match[1]
-        print("    {match} ------ | STATUS : {status}".format(match=match[0].group(), status=match[1]))
+print("\n Now checking validity of each link, there are {} links \n".format(len(links)))
+#https://realpython.com/python-requests/ - guideline for how to go about testing
 
+def check_links():
+    global links
+    for link in links:
+        try:
+            r = requests.get(link, timeout=3)
+        except Timeout:
+            print("{} ---- Time out".format(link))
+            links[link] = ConnectionCodes.TIMEOUT
+        except ConnectionError:
+            print("{} ---- Connection Error".format(link))
+            links[link] = ConnectionCodes.ERROR
+        except Exception as e:
+             print("\n")
+             print(link)
+             print(type(e))
+             print(e.args)
+             print(e)
+             print("\n")
+             links[link] = ConnectionCodes.ERROR
+        else:
+             links[link] = ConnectionCodes.CONNECT
+             print("{} is valid".format(link))
+
+def print_report():
+    for file in matches:
+        print("File: {}".format(file))
+        for match in matches[file]:
+            match[1] = links[match[0].group()]
+            #links[match[0]] = match[1]
+            if(match[1] != ConnectionCodes.CONNECT):
+                print("    {match} ------ | STATUS : {status}".format(match=match[0].group(), status=match[1]))
+
+recursive_search(join(curdir,"test-repo"))
+
+# broken into different functions to make debugging easier. Can easily turn off and of features
+check_links()
+print_report()
 # TODO have a final output that looks similar to how rip grep organizes its output sampel command below
 # rg -e https:\/\/
