@@ -11,7 +11,7 @@ from colorama import Fore, Back, Style
 # Make the regex for the URI
 # Sourced this regex from https://ihateregex.io
 #url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)')
-url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)[-a-zA-Z\/]')
+url_match = re.compile(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)[-a-zA-Z]\/?')
 
 curdir = dirname(abspath(__file__))
 # Get url of the repo to pull from 
@@ -23,8 +23,8 @@ if(len(argv) > 1):
     run(args=["git", "clone", repo, "test-repo/"])
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
-matches = {}
-links = {}
+matches = {} # A dictionary that shows all the links in each file every key is a file
+links = {} # A dictionary that shows the status of each link every key is a link
 # Main recrsive method that runs the searching on the repository
 # will recursively check each file for matches to the regex and add them to 
 # a global array of matches
@@ -43,12 +43,13 @@ def recursive_search(directory):
                 for line in file:
                     try:
                         # TODO check if multiple links on the same line
-                        match = re.search(url_match, line)
+                        match = re.finditer(url_match, line)
                         if(match != None):
                             if(not file_path in matches):
                                 matches[file_path] = []
-                            matches[file_path].append([match, False])
-                            links[match.group()] = False
+                            for link in match:
+                                matches[file_path].append([link.group(), False])
+                                links[link.group()] = False
                     except UnicodeDecodeError:
                         print("    Following file has encoding issue{}".format(filename))
         else:
@@ -58,10 +59,6 @@ class ConnectionCodes(Enum):
     CONNECT = 1,
     TIMEOUT = 2,
     ERROR = 3
-
-#recursive_search(join(curdir,"temp"))
-#print(matches)
-#print(len(matches))
 
 print("\n Now checking validity of each link, there are {} links \n".format(len(links)))
 #https://realpython.com/python-requests/ - guideline for how to go about testing
@@ -91,16 +88,16 @@ def check_links():
 
 def print_report():
     for file in matches:
-        print("File: {}".format(file))
+        print(Style.RESET_ALL + "File: {}".format(file))
         for match in matches[file]:
-            match[1] = links[match[0].group()]
+            match[1] = links[match[0]]
             #links[match[0]] = match[1]
             if(match[1] == ConnectionCodes.CONNECT):
-                print(Fore.GREEN + "    {match} ------ | STATUS : CONNECT".format(match=match[0].group()))
+                print(Fore.GREEN + "    {match} ------ | STATUS : CONNECT".format(match=match[0]))
             elif(match[1] == ConnectionCodes.TIMEOUT):
-                print(Fore.MAGENTA + "    {match} ------ | STATUS : TIMEOUT".format(match=match[0].group()))
+                print(Fore.MAGENTA + "    {match} ------ | STATUS : TIMEOUT".format(match=match[0]))
             else:
-                print(Fore.RED + "    {match} ------ | STATUS : ERROR".format(match=match[0].group()))
+                print(Fore.RED + "    {match} ------ | STATUS : ERROR".format(match=match[0]))
 
 recursive_search(join(curdir,"test-repo"))
 
