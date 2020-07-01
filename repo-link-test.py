@@ -19,7 +19,7 @@ curdir = dirname(abspath(__file__))
 if(len(argv) > 1):
     repo = argv[1]
     if(isdir(join(curdir,"test-repo"))):
-        run(args=["rf", "-rf", "test-repo"])
+        run(args=["rm", "-rf", "test-repo"])
     run(args=["git", "clone", repo, "test-repo/"])
 # TODO look into possible cloning it to the /tmp directory and cleaning it at the end 
 
@@ -28,8 +28,8 @@ links = {} # A dictionary that shows the status of each link every key is a link
 # Main recrsive method that runs the searching on the repository
 # will recursively check each file for matches to the regex and add them to 
 # a global array of matches
+# TODO Look into adding option to respect gitignore
 def recursive_search(directory):
-    # print(directory)
     global url_match
     global matches
     global links
@@ -65,30 +65,40 @@ print("\n Now checking validity of each link, there are {} links \n".format(len(
 
 def check_links():
     global links
+    print("There are {} links to check".format(len(links)))
+    tracker = 0
     for link in links:
         try:
-            r = requests.get(link, timeout=3)
+            requests.get(link, timeout=3)
         except Timeout:
-            print("{} ---- Time out".format(link))
+ #           print("{} ---- Time out".format(link))
             links[link] = ConnectionCodes.TIMEOUT
         except ConnectionError:
-            print("{} ---- Connection Error".format(link))
+ #           print("{} ---- Connection Error".format(link))
             links[link] = ConnectionCodes.ERROR
-        except Exception as e:
-             print("\n")
-             print(link)
-             print(type(e))
-             print(e.args)
-             print(e)
-             print("\n")
+        except Exception:
+ #            print("\n")
+ #            print(link)
+ #            print(type(e))
+ #            print(e.args)
+ #            print(e)
+ #            print("\n")
              links[link] = ConnectionCodes.ERROR
         else:
              links[link] = ConnectionCodes.CONNECT
-             print("{} is valid".format(link))
+ #             print("{} is valid".format(link))
+        finally:
+            tracker += 1
+            if(tracker % 10 == 0):
+                print("{} out of {}".format(tracker, len(links)))
+
+
+
 
 def print_report():
     for file in matches:
-        print(Style.RESET_ALL + "File: {}".format(file))
+        if(len(matches[file]) > 0):
+            print(Style.RESET_ALL + "File: {}".format(file))
         for match in matches[file]:
             match[1] = links[match[0]]
             #links[match[0]] = match[1]
