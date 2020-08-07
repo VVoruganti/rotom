@@ -1,0 +1,7 @@
+# action.yml
+# https://docs.github.com/en/actions/creating-actions/creating-a-docker-container-action
+name: 'Link Audit'
+description: 'URL auditor to test if links are still live'
+runs:
+    using: 'docker'
+    image: 'Dockerfile'

@@ -31,7 +31,12 @@ $ pip install -r requirements
 ## TODO
 
 - [ ] Add a flag to make it possible to point to an existing repo on a end system 
+- [ ] Implement entirely in a bash script
+- [ ] Implement with regular grep
+- [ ] Conditional checking for different versions of grep
+- [ ] Github Action
 
-## Changelog
+### Prerequesites
 
+* [Rip Grep](https://github.com/BurntSushi/ripgrep)
 
