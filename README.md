@@ -14,6 +14,12 @@ python repo-link-tester.py https://www.github.com/user/repo
 ```
 this will clone the repo and run the analysis
 
+To use the bash script version of the script use the `audit.sh` script and point it to a specific path
+
+```bash
+./audit.sh {path to repo}
+```
+
 ## Development
 
 This project was developed using python 3.7.4
@@ -31,9 +37,9 @@ $ pip install -r requirements
 ## TODO
 
 - [ ] Add a flag to make it possible to point to an existing repo on a end system 
-- [ ] Implement entirely in a bash script
-- [ ] Implement with regular grep
-- [ ] Conditional checking for different versions of grep
+- [x] Implement entirely in a bash script
+- [ ] Implement with regular grep NEED TO TEST
+- [x] Conditional checking for different versions of grep NEED TO TEST
 - [ ] Github Action
 
 ### Prerequesites
